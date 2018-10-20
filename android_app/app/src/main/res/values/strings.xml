@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">PantherGO</string>
+    <string name="username">username</string>
+    <string name="password">password</string>
+    <string name="login">LOGIN</string>
+    <string name="second_activity">Second Activity</string>
+    <string name="title_activity_map">Map</string>
+</resources>
