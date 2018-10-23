@@ -16,6 +16,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    public static int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,8 +49,37 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-            return;
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         }
-        mMap.setMyLocationEnabled(true);
+        //mMap.setMyLocationEnabled(true);
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {//Access Fine Location ==1
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted, yay! Do the
+
+                    // location task you need to do.
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        mMap.setMyLocationEnabled(true);
+                    }
+
+
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+        }
     }
 }
