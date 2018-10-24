@@ -53,8 +53,9 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         }
-        //mMap.setMyLocationEnabled(true);
-
+        else {
+            mMap.setMyLocationEnabled(true);
+        }
     }
 
     @Override
@@ -68,11 +69,9 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                     // permission was granted, yay! Do the
 
                     // location task you need to do.
-                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                         mMap.setMyLocationEnabled(true);
                     }
-
-
                 } else {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
