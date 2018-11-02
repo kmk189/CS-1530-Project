@@ -16,6 +16,10 @@ public class Museum extends Location {
         price=p;
     }
 
+    public Museum(String n, String d, double la, double lo, boolean v, int id) {
+        super(n, d, la, lo, v, id);
+    }
+
     public void setHoursOperation(String hoursOperation) {
         this.hoursOperation = hoursOperation;
     }

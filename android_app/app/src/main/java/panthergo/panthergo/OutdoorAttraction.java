@@ -12,6 +12,10 @@ public class OutdoorAttraction extends Location {
         type=t;
     }
 
+    public OutdoorAttraction(String n, String d, double la, double lo, boolean v, int id) {
+        super(n, d, la, lo, v, id);
+    }
+
     public void setType(String type) {
         this.type = type;
     }
