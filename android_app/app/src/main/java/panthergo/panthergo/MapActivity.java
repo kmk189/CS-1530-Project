@@ -1,17 +1,31 @@
 package panthergo.panthergo;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -26,6 +40,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        loadLocations();
     }
 
 
@@ -81,4 +96,49 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
 
         }
     }
+
+    /* Retrieve basic information on tour locations from the back end */
+    public void loadLocations() {
+        //if there's no internet connection, just display a message saying we can't connect
+        if (!Utility.networkConnectionAvailable(this)) {
+            displayConnectionError();
+            return;
+        }
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                //make a request to retrieve locations from database
+                (Request.Method.GET, getString(R.string.baseURL) + "locations",
+                        null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        parseLocationResponse(response);
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        //if there's an error, display an alert stating something's gone wrong while
+                        // getting locations
+                        displayConnectionError();
+                    }
+                });
+        RequestQueue queue = Volley.newRequestQueue(this);
+        queue.add(jsonObjectRequest);
+    }
+
+    /* Displays an error alert stating that we cannot retrieve location data from our
+     * back end at this time. */
+    public void displayConnectionError() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.connectionErrorMsg)
+                .setTitle("Connection Error")
+                .setNeutralButton("OK", null)
+                .show();
+    }
+
+    public void parseLocationResponse(JSONObject response) {
+        JSONArray restaurants = response.getJSONArray("Restaurant");
+        fillLocationsArray(restaurants, Restaurant.class)
+    }
+
 }
