@@ -8,8 +8,8 @@ public class AcademicBuilding extends Location {
         hoursOperation="";
     }
 
-    public AcademicBuilding(String n, String d,double la, double lo, boolean v, String h){
-        super(n,d,la,lo,v);
+    public AcademicBuilding(String n, String d,double la, double lo, boolean v, String h, int id){
+        super(n,d,la,lo,v, id);
         hoursOperation=h;
     }
 

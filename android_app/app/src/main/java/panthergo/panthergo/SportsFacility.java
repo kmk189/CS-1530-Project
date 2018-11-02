@@ -12,8 +12,9 @@ public class SportsFacility extends Location {
         schedule="";
     }
 
-    public SportsFacility(String n, String d,double la, double lo, boolean v, String sp, String t, String sch){
-        super(n,d,la,lo,v);
+    public SportsFacility(String n, String d,double la, double lo, boolean v, String sp, String t,
+                          String sch,int id){
+        super(n,d,la,lo,v,id);
         sports=sp;
         teams=t;
         schedule=sch;

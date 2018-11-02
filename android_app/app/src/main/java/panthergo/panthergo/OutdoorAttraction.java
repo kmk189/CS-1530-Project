@@ -7,8 +7,8 @@ public class OutdoorAttraction extends Location {
         type="";
     }
 
-    public OutdoorAttraction(String n, String d,double la, double lo, boolean v, String t){
-        super(n,d,la,lo,v);
+    public OutdoorAttraction(String n, String d,double la, double lo, boolean v, String t, int id){
+        super(n,d,la,lo,v,id);
         type=t;
     }
 

@@ -9,8 +9,9 @@ public class Restaurant extends Location {
         hoursOperation="";
         menu="";
     }
-    public Restaurant(String n, String d,double la, double lo, boolean v, String h, String m){
-        super(n,d,la,lo,v);
+    public Restaurant(String n, String d,double la, double lo, boolean v, String h, String m,
+                      int id){
+        super(n,d,la,lo,v,id);
         hoursOperation=h;
         menu=m;
     }

@@ -10,8 +10,8 @@ public class Museum extends Location {
         price=-1;//default is - bc 0 is free and valid price
     }
 
-    public Museum(String n, String d,double la, double lo, boolean v, String h, double p){
-        super(n,d,la,lo,v);
+    public Museum(String n, String d,double la, double lo, boolean v, String h, double p, int id){
+        super(n,d,la,lo,v,id);
         hoursOperation=h;
         price=p;
     }

@@ -6,6 +6,7 @@ public class Location {
     public double latitude;
     public double longitude;
     public boolean visited;
+    public int id;
 
     public Location(){
         name="";
@@ -15,12 +16,13 @@ public class Location {
         visited=false;
     }
 
-    public Location(String n, String d,double la, double lo, boolean v){
+    public Location(String n, String d,double la, double lo, boolean v, int id){
         name=n;
         description=d;
         latitude=la;
         longitude= lo;
         visited=v;
+        this.id = id;
     }
     public void setName(String n){
         name=n;
@@ -34,8 +36,8 @@ public class Location {
     public void setLongitude(double lo) {
         longitude = lo;
     }
-
     public void setVisited(boolean v) {
         visited = v;
     }
+    public void setId(int id) { this.id = id; };
 }
