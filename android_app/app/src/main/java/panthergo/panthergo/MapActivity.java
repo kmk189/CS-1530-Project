@@ -25,11 +25,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
 
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    private ArrayList<Location> locations = new ArrayList<Location>();
     public static int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
 
     @Override
@@ -40,6 +44,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        //load locations from the database into this.locations
         loadLocations();
     }
 
@@ -111,7 +116,11 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
 
                     @Override
                     public void onResponse(JSONObject response) {
-                        parseLocationResponse(response);
+                        try {
+                            parseLocationResponse(response);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }, new Response.ErrorListener() {
 
@@ -136,9 +145,49 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                 .show();
     }
 
-    public void parseLocationResponse(JSONObject response) {
-        JSONArray restaurants = response.getJSONArray("Restaurant");
-        fillLocationsArray(restaurants, Restaurant.class)
+    public void parseLocationResponse(JSONObject response) throws JSONException {
+        String[] locationTypes = {"Restaurant", "AcademicBuilding", "Museum", "OutdoorAttraction",
+        "SportsFacility"};
+        //for every type of location
+        for (String locationType: locationTypes) {
+            // retrieve an array of this type of location (restaurants, academic buildings, etc.)
+            JSONArray locs = response.getJSONArray(locationType);
+
+            // fill the locations array with the current type of location:
+            // For every location in the JSON array
+            for (int i = 0; i < locs.length(); i++) {
+                JSONObject jsonLocation = locs.getJSONObject(i);
+                Location newLocation = getLocation(locationType, jsonLocation.getString("name"),
+                        "", jsonLocation.getDouble("latitude"),
+                        jsonLocation.getDouble("longitude"), jsonLocation.getInt("id"));
+                this.locations.add(newLocation);
+            }
+        }
+    }
+
+    /* Returns a location with the class named by the locationClass argument. The
+     * other arguments supply information for that location */
+    public Location getLocation(String locationClass, String name, String description, double lat,
+                             double lon, int id) {
+        // in future: retrieve visited from device memory
+        boolean visited = false;
+        // use Location (superclass) constructor to instantiate a location object with limited information
+        if (locationClass.equals("Restaurant")) {
+            return new Restaurant(name, description, lat, lon, visited, id);
+        }
+        else if (locationClass.equals("AcademicBuilding")) {
+            return new AcademicBuilding(name, description, lat, lon, visited, id);
+        }
+        else if (locationClass.equals("Museum")) {
+            return new Museum(name, description, lat, lon, visited, id);
+        }
+        else if (locationClass.equals("OutdoorAttraction")) {
+            return new OutdoorAttraction(name, description, lat, lon, visited, id);
+        }
+        else if (locationClass.equals("SportsFacility")) {
+            return new SportsFacility(name, description, lat, lon, visited, id);
+        }
+        return null;
     }
 
 }
