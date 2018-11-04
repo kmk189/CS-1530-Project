@@ -2,15 +2,15 @@ package panthergo.panthergo;
 
 public class Museum extends Location {
     public String hoursOperation;
-    public double price;
+    public String price;
 
     public Museum(){
         super();
         hoursOperation="";
-        price=-1;//default is - bc 0 is free and valid price
+        price="";
     }
 
-    public Museum(String n, String d,double la, double lo, boolean v, String h, double p, int id){
+    public Museum(String n, String d,double la, double lo, boolean v, String h, String p, int id){
         super(n,d,la,lo,v,id);
         hoursOperation=h;
         price=p;
@@ -24,7 +24,7 @@ public class Museum extends Location {
         this.hoursOperation = hoursOperation;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(String price) {
         this.price = price;
     }
 }

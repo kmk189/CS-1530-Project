@@ -24,6 +24,16 @@ public class Location {
         visited=v;
         this.id = id;
     }
+
+    public Location(Location location) {
+        name = location.name;
+        description = location.description;
+        latitude = location.latitude;
+        longitude = location.longitude;
+        visited = location.visited;
+        id = location.id;
+    }
+
     public void setName(String n){
         name=n;
     }
@@ -40,4 +50,8 @@ public class Location {
         visited = v;
     }
     public void setId(int id) { this.id = id; };
+
+    public Location copy() {
+        return new Location(this);
+    }
 }
