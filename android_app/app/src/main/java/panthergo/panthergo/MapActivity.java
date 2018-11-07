@@ -2,6 +2,10 @@ package panthergo.panthergo;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -14,24 +18,36 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.common.api.Api;
+import com.google.android.gms.location.GeofencingClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingRequest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private ArrayList<Location> locations = new ArrayList<Location>();
+    private List<Geofence> mGeofenceList = new ArrayList<Geofence>();
     public static int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
+    private GeofencingClient mGeofencingClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +59,8 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
         mapFragment.getMapAsync(this);
         //load locations from the database into this.locations
         loadLocations();
+
+        mGeofencingClient = LocationServices.getGeofencingClient(this);
     }
 
 
@@ -142,6 +160,26 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                 .setTitle("Connection Error")
                 .setNeutralButton("OK", null)
                 .show();
+    }
+
+    /* Displays an alert when in range of a location to ask if they want to view it*/
+    public void displayLocationAlert(String location_name){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Would you like to learn about " + location_name + "?")
+               .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                   @Override
+                   public void onClick(DialogInterface dialog, int which) {
+                       //call location box with information
+                       //viewLocationInfo()??
+                   }
+               })
+               .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                   @Override
+                   public void onClick(DialogInterface dialog, int which) {
+                       dialog.dismiss();
+                   }
+                });
+        builder.show();
     }
 
     /* Fill the locations array with all locations in the response argument. */
@@ -276,4 +314,37 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
         return locationData;
     }
 
+    public void addGeofence(int id, double latitude, double longitude, float radius){
+        mGeofenceList.add(new Geofence.Builder()
+                .setRequestId(Integer.toString(id))
+                .setCircularRegion(latitude, longitude, radius)
+                .setExpirationDuration(60*60*1000)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
+                .build()
+        );
+    }
+
+    private GeofencingRequest getGeofencingRequest(){
+        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+        builder.addGeofences(mGeofenceList);
+        return builder.build();
+    }
+
+    private final int GEOFENCE_REQ_CODE = 0;
+    PendingIntent mGeofencePendingIntent = null;
+    private PendingIntent getGetGeofencePendingIntent(){
+        if(mGeofencePendingIntent != null){
+            return mGeofencePendingIntent;
+        }
+        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
+        return PendingIntent.getService(this, GEOFENCE_REQ_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    private static final String NOTIFICATION_MSG = "NOTIFICATION MSG";
+    public static Intent makeNotificationIntent(Context context, String msg){
+        Intent intent = new Intent(context, MapActivity.class);
+        intent.putExtra(NOTIFICATION_MSG, msg);
+        return intent;
+    }
 }
