@@ -29,10 +29,9 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,7 +40,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapActivity extends FragmentActivity
+        implements OnMapReadyCallback, OnMarkerClickListener {
 
     private GoogleMap mMap;
     private ArrayList<Location> locations = new ArrayList<Location>();
@@ -133,8 +133,14 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                     public void onResponse(JSONObject response) {
                         try {
                             parseLocationResponse(response);
-                            // TODO: Use this.locations to load map markers?
-                        } catch (JSONException e) {
+                            for(int i = 0; i < locations.size(); i++){
+                                Location currLocation = locations.get(i);
+                                addMarker(currLocation.id, currLocation.name, currLocation.latitude, currLocation.longitude);
+                                addGeofence(currLocation.id, currLocation.latitude, currLocation.longitude, 100);
+                                // TODO: Use this.locations to load map markers?
+                            }
+                        }
+                        catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
@@ -314,6 +320,27 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
         return locationData;
     }
 
+    public void addMarker(int id, String location_name, double latitude, double longitude){
+        LatLng latlng = new LatLng(latitude, longitude);
+        Marker marker = mMap.addMarker(new MarkerOptions()
+                                .position(latlng)
+                                .title(location_name)
+        );
+        marker.setTag(id);
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker){
+        // true if default behavior should not happen (centering and opening the info)
+        // false if default behavior should happen
+        return false;
+    }
+
+    /* Creates a geofence and adds it to the List
+    *  @param id = integer id number
+    *  @param latitude = double latitude value
+    *  @param longitude = double longitude value
+    *  @param radius = float value for the radius (in meters)*/
     public void addGeofence(int id, double latitude, double longitude, float radius){
         mGeofenceList.add(new Geofence.Builder()
                 .setRequestId(Integer.toString(id))
@@ -324,12 +351,14 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
         );
     }
 
+
     private GeofencingRequest getGeofencingRequest(){
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(mGeofenceList);
         return builder.build();
     }
+
 
     private final int GEOFENCE_REQ_CODE = 0;
     PendingIntent mGeofencePendingIntent = null;
