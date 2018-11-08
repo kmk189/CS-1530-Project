@@ -11,6 +11,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -39,6 +41,8 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.google.android.gms.location.Geofence.NEVER_EXPIRE;
 
 public class MapActivity extends FragmentActivity
         implements OnMapReadyCallback, OnMarkerClickListener {
@@ -169,14 +173,13 @@ public class MapActivity extends FragmentActivity
     }
 
     /* Displays an alert when in range of a location to ask if they want to view it*/
-    public void displayLocationAlert(String location_name){
+    public void displayLocationAlert(String location_name, final int location_id){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Would you like to learn about " + location_name + "?")
                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                    @Override
                    public void onClick(DialogInterface dialog, int which) {
-                       //call location box with information
-                       //viewLocationInfo()??
+                       displayLocationInformation(location_id);
                    }
                })
                .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -186,6 +189,24 @@ public class MapActivity extends FragmentActivity
                    }
                 });
         builder.show();
+    }
+
+    public void displayLocationInformation(int location_id){
+        Location location = null;
+        for(int i = 0; i < locations.size(); i++){
+            if(locations.get(i).id == location_id){
+                location = locations.get(i);
+                break;
+            }
+        }
+
+        // Display the info_box layout
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View yourView = inflater.inflate(R.layout.info_box, null, false);
+
+        // yourView.bringToFront();
+
+        location.setVisited(true);
     }
 
     /* Fill the locations array with all locations in the response argument. */
@@ -345,7 +366,8 @@ public class MapActivity extends FragmentActivity
         mGeofenceList.add(new Geofence.Builder()
                 .setRequestId(Integer.toString(id))
                 .setCircularRegion(latitude, longitude, radius)
-                .setExpirationDuration(60*60*1000)
+                .setExpirationDuration(NEVER_EXPIRE)
+                .setLoiteringDelay(5000)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
                 .build()
         );
