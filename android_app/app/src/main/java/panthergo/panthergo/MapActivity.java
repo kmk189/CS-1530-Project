@@ -7,9 +7,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,6 +36,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -48,7 +52,7 @@ public class MapActivity extends FragmentActivity
         implements OnMapReadyCallback, OnMarkerClickListener {
 
     private GoogleMap mMap;
-    private ArrayList<Location> locations = new ArrayList<Location>();
+    public static ArrayList<Location> locations = new ArrayList<Location>();
     private List<Geofence> mGeofenceList = new ArrayList<Geofence>();
     public static int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private GeofencingClient mGeofencingClient;
@@ -140,7 +144,7 @@ public class MapActivity extends FragmentActivity
                             for(int i = 0; i < locations.size(); i++){
                                 Location currLocation = locations.get(i);
                                 addMarker(currLocation.id, currLocation.name, currLocation.latitude, currLocation.longitude);
-                                addGeofence(currLocation.id, currLocation.latitude, currLocation.longitude, 100);
+                                addGeofenceToList(currLocation.id, currLocation.latitude, currLocation.longitude, 100);
                                 // TODO: Use this.locations to load map markers?
                             }
                         }
@@ -170,43 +174,6 @@ public class MapActivity extends FragmentActivity
                 .setTitle("Connection Error")
                 .setNeutralButton("OK", null)
                 .show();
-    }
-
-    /* Displays an alert when in range of a location to ask if they want to view it*/
-    public void displayLocationAlert(String location_name, final int location_id){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Would you like to learn about " + location_name + "?")
-               .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                   @Override
-                   public void onClick(DialogInterface dialog, int which) {
-                       displayLocationInformation(location_id);
-                   }
-               })
-               .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                   @Override
-                   public void onClick(DialogInterface dialog, int which) {
-                       dialog.dismiss();
-                   }
-                });
-        builder.show();
-    }
-
-    public void displayLocationInformation(int location_id){
-        Location location = null;
-        for(int i = 0; i < locations.size(); i++){
-            if(locations.get(i).id == location_id){
-                location = locations.get(i);
-                break;
-            }
-        }
-
-        // Display the info_box layout
-        LayoutInflater inflater = LayoutInflater.from(this);
-        View yourView = inflater.inflate(R.layout.info_box, null, false);
-
-        // yourView.bringToFront();
-
-        location.setVisited(true);
     }
 
     /* Fill the locations array with all locations in the response argument. */
@@ -362,7 +329,7 @@ public class MapActivity extends FragmentActivity
     *  @param latitude = double latitude value
     *  @param longitude = double longitude value
     *  @param radius = float value for the radius (in meters)*/
-    public void addGeofence(int id, double latitude, double longitude, float radius){
+    public void addGeofenceToList(int id, double latitude, double longitude, float radius){
         mGeofenceList.add(new Geofence.Builder()
                 .setRequestId(Integer.toString(id))
                 .setCircularRegion(latitude, longitude, radius)
@@ -381,6 +348,23 @@ public class MapActivity extends FragmentActivity
         return builder.build();
     }
 
+    public void setupGeofences(){
+        if(checkPermission()) {
+            mGeofencingClient.addGeofences(getGeofencingRequest(), getGetGeofencePendingIntent())
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+
+                        }
+                    });
+        }
+    }
 
     private final int GEOFENCE_REQ_CODE = 0;
     PendingIntent mGeofencePendingIntent = null;
@@ -392,10 +376,7 @@ public class MapActivity extends FragmentActivity
         return PendingIntent.getService(this, GEOFENCE_REQ_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    private static final String NOTIFICATION_MSG = "NOTIFICATION MSG";
-    public static Intent makeNotificationIntent(Context context, String msg){
-        Intent intent = new Intent(context, MapActivity.class);
-        intent.putExtra(NOTIFICATION_MSG, msg);
-        return intent;
+    private boolean checkPermission(){
+        return (ContextCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED);
     }
 }

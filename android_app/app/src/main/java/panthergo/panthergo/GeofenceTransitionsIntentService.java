@@ -1,19 +1,13 @@
 package panthergo.panthergo;
 
+import android.app.AlertDialog;
 import android.app.IntentService;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.TaskStackBuilder;
-import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.os.Build;
-import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofenceStatusCodes;
@@ -59,7 +53,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
 
 
             // Send notification and log the transition details.
-            sendNotification(geofenceTransitionDetails);
+            // sendNotification(geofenceTransitionDetails);
         }
     }
 
@@ -79,33 +73,6 @@ public class GeofenceTransitionsIntentService extends IntentService {
         return status + TextUtils.join(", ", triggeringGeofencesIdsList);
     }
 
-    private void sendNotification(String msg){
-        Intent notificationIntent = MapActivity.makeNotificationIntent(
-                getApplicationContext(), msg
-        );
-
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addParentStack(MapActivity.class);
-        stackBuilder.addNextIntent(notificationIntent);
-        PendingIntent notificationPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        NotificationManager notificationMng = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationMng.notify(
-                GEOFENCE_NOTIFICATION_ID,
-                createNotification(msg, notificationPendingIntent)
-        );
-    }
-
-    private Notification createNotification(String msg, PendingIntent notificationPendingIntent){
-        Notification notification = new Notification.Builder(this)
-                .setContentTitle(msg)
-                .setContentText("Geofence Notification")
-                .setContentIntent(notificationPendingIntent)
-                .setAutoCancel(true)
-                .build();
-        return notification;
-    }
-
     private static String getErrorString(int errorCode){
         switch(errorCode){
             case GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE:
@@ -118,4 +85,43 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 return "Unknown error";
         }
     }
+
+    /* Displays an alert when in range of a location to ask if they want to view it*/
+    public void displayLocationAlert(String location_name, final int location_id){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Would you like to learn about " + location_name + "?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        displayLocationInformation(location_id);
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        builder.show();
+    }
+
+    public void displayLocationInformation(int location_id){
+        ArrayList<Location> locations = MapActivity.locations;
+        Location location = null;
+        for(int i = 0; i < locations.size(); i++){
+            if(locations.get(i).id == location_id){
+                location = locations.get(i);
+                break;
+            }
+        }
+
+        // Display the info_box layout
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View yourView = inflater.inflate(R.layout.info_box, null, false);
+
+        // yourView.bringToFront();
+
+        location.setVisited(true);
+    }
+
 }
