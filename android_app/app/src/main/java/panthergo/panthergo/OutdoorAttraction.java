@@ -7,13 +7,13 @@ public class OutdoorAttraction extends Location {
         type="";
     }
 
-    public OutdoorAttraction(String n, String d,double la, double lo, boolean v, String t, int id){
-        super(n,d,la,lo,v,id);
+    public OutdoorAttraction(String n, String d,double la, double lo, boolean v, String t, int id, String uuid){
+        super(n,d,la,lo,v,id, uuid);
         type=t;
     }
 
-    public OutdoorAttraction(String n, String d, double la, double lo, boolean v, int id) {
-        super(n, d, la, lo, v, id);
+    public OutdoorAttraction(String n, String d, double la, double lo, boolean v, int id,  String uuid) {
+        super(n, d, la, lo, v, id, uuid);
     }
 
     public void setType(String type) {
