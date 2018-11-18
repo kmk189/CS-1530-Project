@@ -44,6 +44,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static com.google.android.gms.location.Geofence.NEVER_EXPIRE;
@@ -53,6 +54,8 @@ public class MapActivity extends FragmentActivity
 
     private GoogleMap mMap;
     public static ArrayList<Location> locations = new ArrayList<Location>();
+    public static HashMap<String, Location> locationMap = new HashMap<>(); //maps uuid to location obj
+    public static ArrayList<Location> visitedLocations = new ArrayList<>();
     private List<Geofence> mGeofenceList = new ArrayList<Geofence>();
     public static int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private GeofencingClient mGeofencingClient;
@@ -196,6 +199,7 @@ public class MapActivity extends FragmentActivity
                         jsonLocation.getString("uuid"));
                 // add the location to the locations array
                 this.locations.add(newLocation);
+                locationMap.put(newLocation.uuid, newLocation);
             }
         }
     }
