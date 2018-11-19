@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static android.app.PendingIntent.getActivity;
 import static com.google.android.gms.location.Geofence.NEVER_EXPIRE;
 
 public class MapActivity extends FragmentActivity
@@ -68,9 +69,10 @@ public class MapActivity extends FragmentActivity
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        //load locations from the database into this.locations
+        // set the context in LocationVisitHandler so it can access visited locations on disk
+        LocationVisitHandler.context = getApplicationContext();
+        // load locations from the database into this.locations
         loadLocations();
-
         mGeofencingClient = LocationServices.getGeofencingClient(this);
     }
 
@@ -143,7 +145,14 @@ public class MapActivity extends FragmentActivity
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
+                            // update the ArrayList and HashMap of locations
                             parseLocationResponse(response);
+                            // now that we can be sure locationMap is filled with data, update visitedLocations
+                            visitedLocations = LocationVisitHandler.getVisitedLocationsList(locationMap);
+                            // set all the visited locations' visited status to true
+                            for (Location loc: visitedLocations) {
+                                loc.setVisited(true);
+                            }
                             for(int i = 0; i < locations.size(); i++){
                                 Location currLocation = locations.get(i);
                                 addMarker(currLocation.id, currLocation.name, currLocation.latitude, currLocation.longitude);
