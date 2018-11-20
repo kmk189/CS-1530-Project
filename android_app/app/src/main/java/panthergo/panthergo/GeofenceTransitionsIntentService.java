@@ -14,6 +14,7 @@ import com.google.android.gms.location.GeofenceStatusCodes;
 import com.google.android.gms.location.GeofencingEvent;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class GeofenceTransitionsIntentService extends IntentService {
@@ -38,20 +39,17 @@ public class GeofenceTransitionsIntentService extends IntentService {
         int geofenceTransition = geofencingEvent.getGeofenceTransition();
 
         // Test that the reported transition was of interest.
-        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
-                geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
 
             // Get the geofences that were triggered. A single event can trigger
             // multiple geofences.
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
+            ArrayList<String> triggeringGeofencesIdsList = new ArrayList<>();
+            for(Geofence geofence : triggeringGeofences){
+                triggeringGeofencesIdsList.add(geofence.getRequestId());
+            }
 
-            // Get the transition details as a String.
-            String geofenceTransitionDetails = getGeofenceTransitionDetails(
-                    geofenceTransition,
-                    triggeringGeofences
-            );
-
-
+            displayLocationAlert(triggeringGeofencesIdsList.get(0));
             // Send notification and log the transition details.
             // sendNotification(geofenceTransitionDetails);
         }
@@ -87,13 +85,18 @@ public class GeofenceTransitionsIntentService extends IntentService {
     }
 
     /* Displays an alert when in range of a location to ask if they want to view it*/
-    public void displayLocationAlert(String location_name, final int location_id){
+    public void displayLocationAlert(String location_uuid){
+        ArrayList<Location> locations  = MapActivity.locations;
+        HashMap<String, Location> locationMap = MapActivity.locationMap;
+
+        final Location location = locationMap.get(location_uuid);
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Would you like to learn about " + location_name + "?")
+        builder.setMessage("Would you like to learn about " + location.name + "?")
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        displayLocationInformation(location_id);
+                        displayLocationInformation(location);
                     }
                 })
                 .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -105,15 +108,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
         builder.show();
     }
 
-    public void displayLocationInformation(int location_id){
-        ArrayList<Location> locations = MapActivity.locations;
-        Location location = null;
-        for(int i = 0; i < locations.size(); i++){
-            if(locations.get(i).id == location_id){
-                location = locations.get(i);
-                break;
-            }
-        }
+    public void displayLocationInformation(Location location){
 
         // Display the info_box layout
         LayoutInflater inflater = LayoutInflater.from(this);
