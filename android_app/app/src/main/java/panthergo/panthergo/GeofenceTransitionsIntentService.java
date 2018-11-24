@@ -93,7 +93,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        displayLocationInformation(location_id);
+                        // open info box
                     }
                 })
                 .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -103,25 +103,6 @@ public class GeofenceTransitionsIntentService extends IntentService {
                     }
                 });
         builder.show();
-    }
-
-    public void displayLocationInformation(int location_id){
-        ArrayList<Location> locations = MapActivity.locations;
-        Location location = null;
-        for(int i = 0; i < locations.size(); i++){
-            if(locations.get(i).id == location_id){
-                location = locations.get(i);
-                break;
-            }
-        }
-
-        // Display the info_box layout
-        LayoutInflater inflater = LayoutInflater.from(this);
-        View yourView = inflater.inflate(R.layout.info_box, null, false);
-
-        // yourView.bringToFront();
-
-        location.setVisited(true);
     }
 
 }

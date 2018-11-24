@@ -1,10 +1,7 @@
 package panthergo.panthergo;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.app.PendingIntent;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
@@ -134,7 +131,7 @@ public class MapActivity extends FragmentActivity
     public void loadLocations() {
         //if there's no internet connection, just display a message saying we can't connect
         if (!Utility.networkConnectionAvailable(this)) {
-            displayConnectionError();
+            Utility.displayConnectionError(this);
             return;
         }
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -153,14 +150,13 @@ public class MapActivity extends FragmentActivity
                             for (Location loc: visitedLocations) {
                                 loc.setVisited(true);
                             }
-                            for(int i = 0; i < locations.size(); i++){
+                            for (int i = 0; i < locations.size(); i++){
                                 Location currLocation = locations.get(i);
                                 addMarker(currLocation.id, currLocation.name, currLocation.latitude, currLocation.longitude);
                                 addGeofenceToList(currLocation.id, currLocation.latitude, currLocation.longitude, 100);
                                 // TODO: Use this.locations to load map markers?
                             }
-                        }
-                        catch (JSONException e) {
+                        } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
@@ -170,22 +166,12 @@ public class MapActivity extends FragmentActivity
                     public void onErrorResponse(VolleyError error) {
                         //if there's an error, display an alert stating something's gone wrong while
                         // getting locations
-                        displayConnectionError();
+                        Utility.displayConnectionError(MapActivity.this);
                     }
                 });
         // make request
         RequestQueue queue = Volley.newRequestQueue(this);
         queue.add(jsonObjectRequest);
-    }
-
-    /* Displays an error alert stating that we cannot retrieve location data from our
-     * back end at this time. */
-    public void displayConnectionError() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(R.string.connectionErrorMsg)
-                .setTitle("Connection Error")
-                .setNeutralButton("OK", null)
-                .show();
     }
 
     /* Fill the locations array with all locations in the response argument. */
@@ -236,90 +222,6 @@ public class MapActivity extends FragmentActivity
             return new SportsFacility(name, description, lat, lon, visited, id, uuid);
         }
         return null;
-    }
-
-    /* Retrieve data for location and display its info window on the screen */
-    public void viewLocationInfo(final Location location) {
-        // obtain a URL from which we can get detailed info about location
-        String urlPath = getString(R.string.baseURL) + "locations/" + getPluralClassName(location) +
-                "/" + location.id;
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
-                (Request.Method.GET, urlPath,
-                        null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            Location fullLocationInfo = getLocationDetailsFromJSON(location, response);
-                            Utility.printObjectContents(fullLocationInfo); //for debugging
-                            // TODO: use fullLocationInfo to display window?
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        //if there's an error, display an alert stating something's gone wrong while
-                        // getting locations
-                        displayConnectionError();
-                    }
-                });
-        // make the request
-        RequestQueue queue = Volley.newRequestQueue(this);
-        queue.add(jsonObjectRequest);
-    }
-
-    /* Returns a valid plural form of the location argument's class. Needed to determine
-     * the URL for obtaining the detailed information of a location. */
-    public String getPluralClassName(Location location) {
-        if (location instanceof Restaurant || location instanceof AcademicBuilding ||
-                location instanceof OutdoorAttraction || location instanceof Museum) {
-            return location.getClass().getSimpleName() + "s";
-        }
-        //stupid English...
-        else if (location instanceof SportsFacility) {
-            return "SportsFacilities";
-        }
-        else {
-            throw new IllegalArgumentException("Invalid location subclass detected.");
-        }
-    }
-
-    /* Returns a Location with the same class as the location argument and data derived
-     * from the locationInfo JSONObject. */
-    public Location getLocationDetailsFromJSON(Location location, JSONObject locationInfo) throws JSONException {
-        Location locationData = null;
-        if (location instanceof Restaurant) {
-            locationData = new Restaurant();
-            ((Restaurant)locationData).hoursOperation = locationInfo.getString("hoursOperation");
-            ((Restaurant)locationData).menu = locationInfo.getString("menu");
-        }
-        else if (location instanceof AcademicBuilding) {
-            locationData = new AcademicBuilding();
-            ((AcademicBuilding)locationData).hoursOperation = locationInfo.getString("hoursOperation");
-        }
-        else if (location instanceof Museum) {
-            locationData = new Museum();
-            ((Museum) locationData).hoursOperation = locationInfo.getString("hours");
-            ((Museum) locationData).price = locationInfo.getString("price");
-        }
-        else if (location instanceof OutdoorAttraction) {
-            locationData = new OutdoorAttraction();
-            ((OutdoorAttraction) locationData).type = locationInfo.getString("type");
-        }
-        else if (location instanceof SportsFacility) {
-            locationData = new SportsFacility();
-            ((SportsFacility) locationData).sports = locationInfo.getString("sports");
-            ((SportsFacility) locationData).teams = locationInfo.getString("teams");;
-            ((SportsFacility) locationData).schedule = locationInfo.getString("schedule");;
-        }
-        locationData.setDescription(locationInfo.getString("description"));
-        locationData.setName(locationInfo.getString("name"));
-        locationData.setId(locationInfo.getInt("id"));
-        locationData.setLatitude(locationInfo.getDouble("latitude"));
-        locationData.setLongitude(locationInfo.getDouble("longitude"));
-        return locationData;
     }
 
     public void addMarker(int id, String location_name, double latitude, double longitude){

@@ -1,5 +1,6 @@
 package panthergo.panthergo;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -30,5 +31,15 @@ public class Utility {
             out += name + ": " + value + "\n";
         }
         System.out.println(out);
+    }
+
+    /* Displays an error alert stating that we cannot retrieve location data from our
+     * back end at this time. */
+    public static void displayConnectionError(Context context) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setMessage(R.string.connectionErrorMsg)
+                .setTitle("Connection Error")
+                .setNeutralButton("OK", null)
+                .show();
     }
 }
