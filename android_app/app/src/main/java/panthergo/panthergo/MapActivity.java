@@ -295,4 +295,10 @@ public class MapActivity extends FragmentActivity
     private boolean checkPermission(){
         return (ContextCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED);
     }
+
+    public void launchVisitedActivity(View view) {
+        Intent intent = new Intent(this, VisitedActivity.class);
+        //launch the map activity
+        startActivity(intent);
+    }
 }

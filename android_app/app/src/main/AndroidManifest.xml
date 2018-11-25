@@ -49,6 +49,13 @@
             android:name=".InfoBoxActivity"
             android:theme="@android:style/Theme.Holo.Dialog">
         </activity>
+        <activity
+            android:name=".VisitedActivity"
+            android:label="Visited">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="panthergo.panthergo.VisitedActivity" />
+        </activity>
     </application>
 
 </manifest>
