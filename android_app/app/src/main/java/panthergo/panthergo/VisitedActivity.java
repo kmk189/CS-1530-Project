@@ -13,33 +13,27 @@ import java.util.ArrayList;
 
 
 public class VisitedActivity extends AppCompatActivity  {
+
     TextView tv;
-    public ArrayList<String> visitedList = new ArrayList<String>();
-
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_visited);
-
         tv = (TextView) findViewById(R.id.textView);
-
         loadText();
-
-
     }
+
+    /* Close this activity, thereby bringing the map activity back */
     public void launchMapActivity(View view) {
-        Intent intent = new Intent(this, MapActivity.class);
-        //launch the map activity
-        startActivity(intent);
+        this.finish();
     }
+
     private void loadText(){
         String s= "";
 
-        for(int x=0; x<100; x++){
-            s+="Line: "+ String.valueOf(x) +"\n";
+        for (Location loc: MapActivity.visitedLocations) {
+            s+="Line: "+ loc.name +"\n";
         }
         tv.setMovementMethod(new ScrollingMovementMethod());
         tv.setText(s);
