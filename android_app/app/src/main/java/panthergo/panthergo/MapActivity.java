@@ -43,6 +43,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static android.app.PendingIntent.getActivity;
 import static com.google.android.gms.location.Geofence.NEVER_EXPIRE;
@@ -101,6 +102,14 @@ public class MapActivity extends FragmentActivity
         else {
             mMap.setMyLocationEnabled(true);
         }
+
+        // force our onMarkerClick method to get called
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                return MapActivity.this.onMarkerClick(marker);
+            }
+        });
     }
 
     @Override
@@ -152,7 +161,7 @@ public class MapActivity extends FragmentActivity
                             }
                             for (int i = 0; i < locations.size(); i++){
                                 Location currLocation = locations.get(i);
-                                addMarker(currLocation.id, currLocation.name, currLocation.latitude, currLocation.longitude);
+                                addMarker(currLocation);
                                 addGeofenceToList(currLocation.id, currLocation.latitude, currLocation.longitude, 100);
                                 // TODO: Use this.locations to load map markers?
                             }
@@ -224,19 +233,25 @@ public class MapActivity extends FragmentActivity
         return null;
     }
 
-    public void addMarker(int id, String location_name, double latitude, double longitude){
-        LatLng latlng = new LatLng(latitude, longitude);
+    public void addMarker(Location location) {
+        LatLng latlng = new LatLng(location.latitude, location.longitude);
         Marker marker = mMap.addMarker(new MarkerOptions()
                                 .position(latlng)
-                                .title(location_name)
+                                .title(location.name)
         );
-        marker.setTag(id);
+        marker.setTag(location);
     }
 
     @Override
     public boolean onMarkerClick(Marker marker){
-        // true if default behavior should not happen (centering and opening the info)
+        // returns true if default behavior should not happen (centering and opening the info)
         // false if default behavior should happen
+        Location markerLocation = (Location)marker.getTag();
+        if (markerLocation.visited) {
+            // display a yes/no dialog ("do you want to learn more about <location_name>?")
+            Utility.displayLocationAlert(markerLocation, this);
+            return true;
+        }
         return false;
     }
 
