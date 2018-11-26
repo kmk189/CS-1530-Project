@@ -26,6 +26,8 @@
         android:layout_marginTop="8dp"
         android:scrollbars="vertical"
         android:text="TextView"
+        android:onClick="TextView"
+        android:clickable="true"
         android:textSize="24sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
