@@ -5,4 +5,6 @@
     <string name="login">LOGIN</string>
     <string name="second_activity">Second Activity</string>
     <string name="title_activity_map">Map</string>
+    <string name="baseURL">https://panther-go-api.herokuapp.com/</string>
+    <string name="connectionErrorMsg">We\'re having trouble retrieving our location data from the web. Please try again later.</string>
 </resources>
