@@ -13,15 +13,15 @@ public class SportsFacility extends Location {
     }
 
     public SportsFacility(String n, String d,double la, double lo, boolean v, String sp, String t,
-                          String sch,int id){
-        super(n,d,la,lo,v,id);
+                          String sch,int id, String uuid){
+        super(n,d,la,lo,v,id,uuid);
         sports=sp;
         teams=t;
         schedule=sch;
     }
 
-    public SportsFacility(String n, String d, double la, double lo, boolean v, int id) {
-        super(n, d, la, lo, v, id);
+    public SportsFacility(String n, String d, double la, double lo, boolean v, int id, String uuid) {
+        super(n, d, la, lo, v, id, uuid);
     }
 
     public void setSports(String sports) {

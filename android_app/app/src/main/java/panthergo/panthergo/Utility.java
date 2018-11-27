@@ -1,6 +1,9 @@
 package panthergo.panthergo;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
@@ -31,4 +34,44 @@ public class Utility {
         }
         System.out.println(out);
     }
+
+    /* Displays an error alert stating that we cannot retrieve location data from our
+     * back end at this time. context is the calling activity's context */
+    public static void displayConnectionError(Context context) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setMessage(R.string.connectionErrorMsg)
+                .setTitle("Connection Error")
+                .setNeutralButton("OK", null)
+                .show();
+    }
+
+    /* Displays a dialog asking the user if they want to learn more about a location. If they
+     * confirm, an info box for that location is shown. Else the dialog is closed. context is
+      * the calling activity's context */
+    public static void displayLocationAlert(final Location location, final Context context) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setMessage("Would you like to learn about " + location.name + "?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        viewInfoBox(location.uuid, context);
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        builder.show();
+    }
+
+    /* Displays an info box for the location with the provided UUID. Uses context to render
+     * that information box; it should be the calling activity's context. */
+    public static void viewInfoBox(String uuid, Context context) {
+        Intent intent = new Intent(context, InfoBoxActivity.class);
+        intent.putExtra("locationId", uuid);
+        context.startActivity(intent);
+    }
+
 }

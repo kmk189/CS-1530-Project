@@ -96,7 +96,9 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+
                         displayLocationInformation(location);
+
                     }
                 })
                 .setNegativeButton("No", new DialogInterface.OnClickListener() {

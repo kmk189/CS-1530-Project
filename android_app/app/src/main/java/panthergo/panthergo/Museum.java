@@ -10,14 +10,14 @@ public class Museum extends Location {
         price="";
     }
 
-    public Museum(String n, String d,double la, double lo, boolean v, String h, String p, int id){
-        super(n,d,la,lo,v,id);
+    public Museum(String n, String d,double la, double lo, boolean v, String h, String p, int id, String uuid){
+        super(n,d,la,lo,v,id,uuid);
         hoursOperation=h;
         price=p;
     }
 
-    public Museum(String n, String d, double la, double lo, boolean v, int id) {
-        super(n, d, la, lo, v, id);
+    public Museum(String n, String d, double la, double lo, boolean v, int id, String uuid) {
+        super(n, d, la, lo, v, id, uuid);
     }
 
     public void setHoursOperation(String hoursOperation) {

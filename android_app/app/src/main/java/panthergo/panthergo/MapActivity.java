@@ -1,10 +1,7 @@
 package panthergo.panthergo;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.app.PendingIntent;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
@@ -44,8 +41,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static android.app.PendingIntent.getActivity;
 import static com.google.android.gms.location.Geofence.NEVER_EXPIRE;
 
 public class MapActivity extends FragmentActivity
@@ -53,6 +53,8 @@ public class MapActivity extends FragmentActivity
 
     private GoogleMap mMap;
     public static ArrayList<Location> locations = new ArrayList<Location>();
+    public static HashMap<String, Location> locationMap = new HashMap<>(); //maps uuid to location obj
+    public static ArrayList<Location> visitedLocations = new ArrayList<>();
     private List<Geofence> mGeofenceList = new ArrayList<Geofence>();
     public static int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private GeofencingClient mGeofencingClient;
@@ -65,9 +67,10 @@ public class MapActivity extends FragmentActivity
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        //load locations from the database into this.locations
+        // set the context in LocationVisitHandler so it can access visited locations on disk
+        LocationVisitHandler.context = getApplicationContext();
+        // load locations from the database into this.locations
         loadLocations();
-
         mGeofencingClient = LocationServices.getGeofencingClient(this);
     }
 
@@ -99,6 +102,14 @@ public class MapActivity extends FragmentActivity
         else {
             mMap.setMyLocationEnabled(true);
         }
+
+        // force our onMarkerClick method to get called
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                return MapActivity.this.onMarkerClick(marker);
+            }
+        });
     }
 
     @Override
@@ -129,7 +140,7 @@ public class MapActivity extends FragmentActivity
     public void loadLocations() {
         //if there's no internet connection, just display a message saying we can't connect
         if (!Utility.networkConnectionAvailable(this)) {
-            displayConnectionError();
+            Utility.displayConnectionError(this);
             return;
         }
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -140,15 +151,21 @@ public class MapActivity extends FragmentActivity
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
+                            // update the ArrayList and HashMap of locations
                             parseLocationResponse(response);
-                            for(int i = 0; i < locations.size(); i++){
+                            // now that we can be sure locationMap is filled with data, update visitedLocations
+                            visitedLocations = LocationVisitHandler.getVisitedLocationsList(locationMap);
+                            // set all the visited locations' visited status to true
+                            for (Location loc: visitedLocations) {
+                                loc.setVisited(true);
+                            }
+                            for (int i = 0; i < locations.size(); i++){
                                 Location currLocation = locations.get(i);
-                                addMarker(currLocation.id, currLocation.name, currLocation.latitude, currLocation.longitude);
+                                addMarker(currLocation);
                                 addGeofenceToList(currLocation.id, currLocation.latitude, currLocation.longitude, 100);
                                 // TODO: Use this.locations to load map markers?
                             }
-                        }
-                        catch (JSONException e) {
+                        } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
@@ -158,22 +175,12 @@ public class MapActivity extends FragmentActivity
                     public void onErrorResponse(VolleyError error) {
                         //if there's an error, display an alert stating something's gone wrong while
                         // getting locations
-                        displayConnectionError();
+                        Utility.displayConnectionError(MapActivity.this);
                     }
                 });
         // make request
         RequestQueue queue = Volley.newRequestQueue(this);
         queue.add(jsonObjectRequest);
-    }
-
-    /* Displays an error alert stating that we cannot retrieve location data from our
-     * back end at this time. */
-    public void displayConnectionError() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(R.string.connectionErrorMsg)
-                .setTitle("Connection Error")
-                .setNeutralButton("OK", null)
-                .show();
     }
 
     /* Fill the locations array with all locations in the response argument. */
@@ -192,9 +199,11 @@ public class MapActivity extends FragmentActivity
                 // parse the JSON object to a Location
                 Location newLocation = getLocation(locationType, jsonLocation.getString("name"),
                         "", jsonLocation.getDouble("latitude"),
-                        jsonLocation.getDouble("longitude"), jsonLocation.getInt("id"));
+                        jsonLocation.getDouble("longitude"), jsonLocation.getInt("id"),
+                        jsonLocation.getString("uuid"));
                 // add the location to the locations array
                 this.locations.add(newLocation);
+                locationMap.put(newLocation.uuid, newLocation);
             }
         }
     }
@@ -202,125 +211,47 @@ public class MapActivity extends FragmentActivity
     /* Returns a location with the class named by the locationClass argument. The
      * other arguments supply information for that location */
     public Location getLocation(String locationClass, String name, String description, double lat,
-                             double lon, int id) {
+                             double lon, int id, String uuid) {
         // in future: retrieve visited from device memory
         boolean visited = false;
         // use Location (superclass) constructor to instantiate a location object with limited information
         if (locationClass.equals("Restaurant")) {
-            return new Restaurant(name, description, lat, lon, visited, id);
+            return new Restaurant(name, description, lat, lon, visited, id, uuid);
         }
         else if (locationClass.equals("AcademicBuilding")) {
-            return new AcademicBuilding(name, description, lat, lon, visited, id);
+            return new AcademicBuilding(name, description, lat, lon, visited, id, uuid);
         }
         else if (locationClass.equals("Museum")) {
-            return new Museum(name, description, lat, lon, visited, id);
+            return new Museum(name, description, lat, lon, visited, id, uuid);
         }
         else if (locationClass.equals("OutdoorAttraction")) {
-            return new OutdoorAttraction(name, description, lat, lon, visited, id);
+            return new OutdoorAttraction(name, description, lat, lon, visited, id, uuid);
         }
         else if (locationClass.equals("SportsFacility")) {
-            return new SportsFacility(name, description, lat, lon, visited, id);
+            return new SportsFacility(name, description, lat, lon, visited, id, uuid);
         }
         return null;
     }
 
-    /* Retrieve data for location and display its info window on the screen */
-    public void viewLocationInfo(final Location location) {
-        // obtain a URL from which we can get detailed info about location
-        String urlPath = getString(R.string.baseURL) + "locations/" + getPluralClassName(location) +
-                "/" + location.id;
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
-                (Request.Method.GET, urlPath,
-                        null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            Location fullLocationInfo = getLocationDetailsFromJSON(location, response);
-                            Utility.printObjectContents(fullLocationInfo); //for debugging
-                            // TODO: use fullLocationInfo to display window?
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        //if there's an error, display an alert stating something's gone wrong while
-                        // getting locations
-                        displayConnectionError();
-                    }
-                });
-        // make the request
-        RequestQueue queue = Volley.newRequestQueue(this);
-        queue.add(jsonObjectRequest);
-    }
-
-    /* Returns a valid plural form of the location argument's class. Needed to determine
-     * the URL for obtaining the detailed information of a location. */
-    public String getPluralClassName(Location location) {
-        if (location instanceof Restaurant || location instanceof AcademicBuilding ||
-                location instanceof OutdoorAttraction || location instanceof Museum) {
-            return location.getClass().getSimpleName() + "s";
-        }
-        //stupid English...
-        else if (location instanceof SportsFacility) {
-            return "SportsFacilities";
-        }
-        else {
-            throw new IllegalArgumentException("Invalid location subclass detected.");
-        }
-    }
-
-    /* Returns a Location with the same class as the location argument and data derived
-     * from the locationInfo JSONObject. */
-    public Location getLocationDetailsFromJSON(Location location, JSONObject locationInfo) throws JSONException {
-        Location locationData = null;
-        if (location instanceof Restaurant) {
-            locationData = new Restaurant();
-            ((Restaurant)locationData).hoursOperation = locationInfo.getString("hoursOperation");
-            ((Restaurant)locationData).menu = locationInfo.getString("menu");
-        }
-        else if (location instanceof AcademicBuilding) {
-            locationData = new AcademicBuilding();
-            ((AcademicBuilding)locationData).hoursOperation = locationInfo.getString("hoursOperation");
-        }
-        else if (location instanceof Museum) {
-            locationData = new Museum();
-            ((Museum) locationData).hoursOperation = locationInfo.getString("hours");
-            ((Museum) locationData).price = locationInfo.getString("price");
-        }
-        else if (location instanceof OutdoorAttraction) {
-            locationData = new OutdoorAttraction();
-            ((OutdoorAttraction) locationData).type = locationInfo.getString("type");
-        }
-        else if (location instanceof SportsFacility) {
-            locationData = new SportsFacility();
-            ((SportsFacility) locationData).sports = locationInfo.getString("sports");
-            ((SportsFacility) locationData).teams = locationInfo.getString("teams");;
-            ((SportsFacility) locationData).schedule = locationInfo.getString("schedule");;
-        }
-        locationData.setDescription(locationInfo.getString("description"));
-        locationData.setName(locationInfo.getString("name"));
-        locationData.setId(locationInfo.getInt("id"));
-        locationData.setLatitude(locationInfo.getDouble("latitude"));
-        locationData.setLongitude(locationInfo.getDouble("longitude"));
-        return locationData;
-    }
-
-    public void addMarker(int id, String location_name, double latitude, double longitude){
-        LatLng latlng = new LatLng(latitude, longitude);
+    public void addMarker(Location location) {
+        LatLng latlng = new LatLng(location.latitude, location.longitude);
         Marker marker = mMap.addMarker(new MarkerOptions()
                                 .position(latlng)
-                                .title(location_name)
+                                .title(location.name)
         );
-        marker.setTag(id);
+        marker.setTag(location);
     }
 
     @Override
     public boolean onMarkerClick(Marker marker){
-        // true if default behavior should not happen (centering and opening the info)
+        // returns true if default behavior should not happen (centering and opening the info)
         // false if default behavior should happen
+        Location markerLocation = (Location)marker.getTag();
+        if (markerLocation.visited) {
+            // display a yes/no dialog ("do you want to learn more about <location_name>?")
+            Utility.displayLocationAlert(markerLocation, this);
+            return true;
+        }
         return false;
     }
 
@@ -378,5 +309,11 @@ public class MapActivity extends FragmentActivity
 
     private boolean checkPermission(){
         return (ContextCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED);
+    }
+
+    public void launchVisitedActivity(View view) {
+        Intent intent = new Intent(this, VisitedActivity.class);
+        //launch the map activity
+        startActivity(intent);
     }
 }

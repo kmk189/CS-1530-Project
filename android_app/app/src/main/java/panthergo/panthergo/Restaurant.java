@@ -10,14 +10,14 @@ public class Restaurant extends Location {
         menu="";
     }
     public Restaurant(String n, String d,double la, double lo, boolean v, String h, String m,
-                      int id){
-        super(n,d,la,lo,v,id);
+                      int id, String uuid){
+        super(n,d,la,lo,v,id, uuid);
         hoursOperation=h;
         menu=m;
     }
 
-    public Restaurant(String n, String d, double la, double lo, boolean v, int id) {
-        super(n, d, la, lo, v, id);
+    public Restaurant(String n, String d, double la, double lo, boolean v, int id, String uuid) {
+        super(n, d, la, lo, v, id, uuid);
     }
 
     public void setHoursOperation(String hoursOperation) {
