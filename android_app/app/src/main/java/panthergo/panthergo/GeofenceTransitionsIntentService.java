@@ -49,9 +49,14 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 triggeringGeofencesIdsList.add(geofence.getRequestId());
             }
 
-            displayLocationAlert(triggeringGeofencesIdsList.get(0));
+            ArrayList<Location> locations  = MapActivity.locations;
+            HashMap<String, Location> locationMap = MapActivity.locationMap;
+
+            final Location location = locationMap.get(triggeringGeofencesIdsList.get(0));
+
+            Utility utility = new Utility();
+            utility.displayLocationAlert(location, this); //location, this
             // Send notification and log the transition details.
-            // sendNotification(geofenceTransitionDetails);
         }
     }
 
@@ -83,42 +88,4 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 return "Unknown error";
         }
     }
-
-    /* Displays an alert when in range of a location to ask if they want to view it*/
-    public void displayLocationAlert(String location_uuid){
-        ArrayList<Location> locations  = MapActivity.locations;
-        HashMap<String, Location> locationMap = MapActivity.locationMap;
-
-        final Location location = locationMap.get(location_uuid);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Would you like to learn about " + location.name + "?")
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                        displayLocationInformation(location);
-
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-        builder.show();
-    }
-
-    public void displayLocationInformation(Location location){
-
-        // Display the info_box layout
-        LayoutInflater inflater = LayoutInflater.from(this);
-        View yourView = inflater.inflate(R.layout.info_box, null, false);
-
-        // yourView.bringToFront();
-
-        location.setVisited(true);
-    }
-
 }
