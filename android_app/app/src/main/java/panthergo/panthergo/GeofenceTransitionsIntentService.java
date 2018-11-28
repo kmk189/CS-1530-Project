@@ -14,6 +14,7 @@ import com.google.android.gms.location.GeofenceStatusCodes;
 import com.google.android.gms.location.GeofencingEvent;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class GeofenceTransitionsIntentService extends IntentService {
@@ -38,22 +39,24 @@ public class GeofenceTransitionsIntentService extends IntentService {
         int geofenceTransition = geofencingEvent.getGeofenceTransition();
 
         // Test that the reported transition was of interest.
-        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
-                geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
 
             // Get the geofences that were triggered. A single event can trigger
             // multiple geofences.
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
+            ArrayList<String> triggeringGeofencesIdsList = new ArrayList<>();
+            for(Geofence geofence : triggeringGeofences){
+                triggeringGeofencesIdsList.add(geofence.getRequestId());
+            }
 
-            // Get the transition details as a String.
-            String geofenceTransitionDetails = getGeofenceTransitionDetails(
-                    geofenceTransition,
-                    triggeringGeofences
-            );
+            ArrayList<Location> locations  = MapActivity.locations;
+            HashMap<String, Location> locationMap = MapActivity.locationMap;
 
+            final Location location = locationMap.get(triggeringGeofencesIdsList.get(0));
 
+            Utility utility = new Utility();
+            utility.displayLocationAlert(location, this); //location, this
             // Send notification and log the transition details.
-            // sendNotification(geofenceTransitionDetails);
         }
     }
 
@@ -85,24 +88,4 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 return "Unknown error";
         }
     }
-
-    /* Displays an alert when in range of a location to ask if they want to view it*/
-    public void displayLocationAlert(String location_name, final int location_id){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Would you like to learn about " + location_name + "?")
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // open info box
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-        builder.show();
-    }
-
 }
