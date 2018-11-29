@@ -2,6 +2,7 @@ package panthergo.panthergo;
 
 import android.app.AlertDialog;
 import android.app.IntentService;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.text.TextUtils;
@@ -21,6 +22,8 @@ public class GeofenceTransitionsIntentService extends IntentService {
 
     private static final String TAG = GeofenceTransitionsIntentService.class.getSimpleName();
     public static final int GEOFENCE_NOTIFICATION_ID = 0;
+    public static Context mapContext; // we cannot access MapActivity.this in here, but we need it.
+                                      // this variable is set in MapActivity
 
     public GeofenceTransitionsIntentService(){
         super(TAG);
@@ -34,13 +37,10 @@ public class GeofenceTransitionsIntentService extends IntentService {
             Log.e(TAG, errorMessage);
             return;
         }
-
         // Get the transition type.
         int geofenceTransition = geofencingEvent.getGeofenceTransition();
-
         // Test that the reported transition was of interest.
         if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
-
             // Get the geofences that were triggered. A single event can trigger
             // multiple geofences.
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
@@ -48,15 +48,10 @@ public class GeofenceTransitionsIntentService extends IntentService {
             for(Geofence geofence : triggeringGeofences){
                 triggeringGeofencesIdsList.add(geofence.getRequestId());
             }
-
-            ArrayList<Location> locations  = MapActivity.locations;
-            HashMap<String, Location> locationMap = MapActivity.locationMap;
-
-            final Location location = locationMap.get(triggeringGeofencesIdsList.get(0));
-
-            Utility utility = new Utility();
-            utility.displayLocationAlert(location, this); //location, this
-            // Send notification and log the transition details.
+            // todo: retrieve closest location
+            String triggeringLocationId = triggeringGeofencesIdsList.get(0);
+            final Location location = MapActivity.locationMap.get(triggeringLocationId);
+            Utility.displayLocationAlert(location, mapContext);
         }
     }
 

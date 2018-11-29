@@ -69,9 +69,10 @@ public class MapActivity extends FragmentActivity
         mapFragment.getMapAsync(this);
         // set the context in LocationVisitHandler so it can access visited locations on disk
         LocationVisitHandler.context = getApplicationContext();
+        GeofenceTransitionsIntentService.mapContext = this;
         // load locations from the database into this.locations
-        loadLocations();
         mGeofencingClient = LocationServices.getGeofencingClient(this);
+        loadLocations();
     }
 
 
@@ -98,8 +99,7 @@ public class MapActivity extends FragmentActivity
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-        }
-        else {
+        } else {
             mMap.setMyLocationEnabled(true);
         }
 
@@ -156,15 +156,16 @@ public class MapActivity extends FragmentActivity
                             // now that we can be sure locationMap is filled with data, update visitedLocations
                             visitedLocations = LocationVisitHandler.getVisitedLocationsList(locationMap);
                             // set all the visited locations' visited status to true
-                            for (Location loc: visitedLocations) {
+                            for (Location loc : visitedLocations) {
                                 loc.setVisited(true);
                             }
                             for (int i = 0; i < locations.size(); i++){
                                 Location currLocation = locations.get(i);
                                 addMarker(currLocation);
-                                addGeofenceToList(currLocation.id, currLocation.latitude, currLocation.longitude, 100);
+                                addGeofenceToList(currLocation.uuid, currLocation.latitude, currLocation.longitude, 100);
                                 // TODO: Use this.locations to load map markers?
                             }
+                            setupGeofences();
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -186,9 +187,9 @@ public class MapActivity extends FragmentActivity
     /* Fill the locations array with all locations in the response argument. */
     public void parseLocationResponse(JSONObject response) throws JSONException {
         String[] locationTypes = {"Restaurant", "AcademicBuilding", "Museum", "OutdoorAttraction",
-        "SportsFacility"};
+                "SportsFacility"};
         //for every type of location
-        for (String locationType: locationTypes) {
+        for (String locationType : locationTypes) {
             // retrieve an array of this type of location (restaurants, academic buildings, etc.)
             JSONArray locations = response.getJSONArray(locationType);
 
@@ -211,23 +212,19 @@ public class MapActivity extends FragmentActivity
     /* Returns a location with the class named by the locationClass argument. The
      * other arguments supply information for that location */
     public Location getLocation(String locationClass, String name, String description, double lat,
-                             double lon, int id, String uuid) {
+                                double lon, int id, String uuid) {
         // in future: retrieve visited from device memory
         boolean visited = false;
         // use Location (superclass) constructor to instantiate a location object with limited information
         if (locationClass.equals("Restaurant")) {
             return new Restaurant(name, description, lat, lon, visited, id, uuid);
-        }
-        else if (locationClass.equals("AcademicBuilding")) {
+        } else if (locationClass.equals("AcademicBuilding")) {
             return new AcademicBuilding(name, description, lat, lon, visited, id, uuid);
-        }
-        else if (locationClass.equals("Museum")) {
+        } else if (locationClass.equals("Museum")) {
             return new Museum(name, description, lat, lon, visited, id, uuid);
-        }
-        else if (locationClass.equals("OutdoorAttraction")) {
+        } else if (locationClass.equals("OutdoorAttraction")) {
             return new OutdoorAttraction(name, description, lat, lon, visited, id, uuid);
-        }
-        else if (locationClass.equals("SportsFacility")) {
+        } else if (locationClass.equals("SportsFacility")) {
             return new SportsFacility(name, description, lat, lon, visited, id, uuid);
         }
         return null;
@@ -236,8 +233,8 @@ public class MapActivity extends FragmentActivity
     public void addMarker(Location location) {
         LatLng latlng = new LatLng(location.latitude, location.longitude);
         Marker marker = mMap.addMarker(new MarkerOptions()
-                                .position(latlng)
-                                .title(location.name)
+                .position(latlng)
+                .title(location.name)
         );
         marker.setTag(location);
     }
@@ -256,13 +253,13 @@ public class MapActivity extends FragmentActivity
     }
 
     /* Creates a geofence and adds it to the List
-    *  @param id = integer id number
-    *  @param latitude = double latitude value
-    *  @param longitude = double longitude value
-    *  @param radius = float value for the radius (in meters)*/
-    public void addGeofenceToList(int id, double latitude, double longitude, float radius){
+     *  @param id = integer id number
+     *  @param latitude = double latitude value
+     *  @param longitude = double longitude value
+     *  @param radius = float value for the radius (in meters)*/
+    public void addGeofenceToList(String uuid, double latitude, double longitude, float radius) {
         mGeofenceList.add(new Geofence.Builder()
-                .setRequestId(Integer.toString(id))
+                .setRequestId(uuid)
                 .setCircularRegion(latitude, longitude, radius)
                 .setExpirationDuration(NEVER_EXPIRE)
                 .setLoiteringDelay(5000)
@@ -272,29 +269,39 @@ public class MapActivity extends FragmentActivity
     }
 
 
-    private GeofencingRequest getGeofencingRequest(){
+    private GeofencingRequest getGeofencingRequest() {
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(mGeofenceList);
         return builder.build();
     }
 
-    public void setupGeofences(){
-        if(checkPermission()) {
-            mGeofencingClient.addGeofences(getGeofencingRequest(), getGetGeofencePendingIntent())
-                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
-
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-
-                        }
-                    });
+    public void setupGeofences() {
+        // We already checked for this permission. Asking here would ask the user twice in a row.
+        // This is simply here because Android makes us put it here.
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
         }
+        mGeofencingClient.addGeofences(getGeofencingRequest(), getGetGeofencePendingIntent())
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+
+                    }
+                });
     }
 
     private final int GEOFENCE_REQ_CODE = 0;

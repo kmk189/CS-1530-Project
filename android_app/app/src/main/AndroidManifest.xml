@@ -56,6 +56,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="panthergo.panthergo.VisitedActivity" />
         </activity>
+        <activity
+            android:name=".LocationAlertActivity"
+            android:theme="@style/Theme.AppCompat.ClearBackground">
+        </activity>
     </application>
 
 </manifest>

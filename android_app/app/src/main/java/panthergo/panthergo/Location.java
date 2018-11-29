@@ -1,6 +1,8 @@
 package panthergo.panthergo;
 
-public class Location {
+import java.io.Serializable;
+
+public class Location implements Serializable {
     public String name;
     public String description;
     public double latitude;
