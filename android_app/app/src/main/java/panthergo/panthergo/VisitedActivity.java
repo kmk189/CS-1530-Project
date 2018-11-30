@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 public class VisitedActivity extends AppCompatActivity  {
     TextView tv;
+    TextView tvStat;
     Context con;
 
 
@@ -21,6 +22,7 @@ public class VisitedActivity extends AppCompatActivity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_visited);
         tv = (TextView) findViewById(R.id.textView);
+        tvStat = (TextView) findViewById(R.id.tvStats);
         loadText();
     }
 
@@ -31,12 +33,13 @@ public class VisitedActivity extends AppCompatActivity  {
 
     private void loadText(){
         String s= "";
+        String stat="";
+        float percent = (MapActivity.visitedLocations.size() * 100.0f) / MapActivity.locations.size();
 
-        //if (MapActivity.visitedLocations.size()>0){
-        if (MapActivity.locations.size()>0){
+        stat= "Visited Locations: "+MapActivity.visitedLocations.size()+"\n"+percent+"% visited";
+        if (MapActivity.visitedLocations.size()>0){
 
-            //for (Location loc: MapActivity.visitedLocations) {
-            for (Location loc: MapActivity.locations) {
+            for (Location loc: MapActivity.visitedLocations) {
                 s+=loc.name +"\n";
             }
             SpannableString ss= new SpannableString(s);
@@ -56,18 +59,17 @@ public class VisitedActivity extends AppCompatActivity  {
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
             tv.setMovementMethod(LinkMovementMethod.getInstance());
-            //tv.setMovementMethod(new ScrollingMovementMethod());
             tv.setText(ss);
         }else{
             s="YOU HAVE NOT YET\nVISITED ANY LOCATIONS\n\nRETURN TO THE MAP \nTO CONTINUE";
             tv.setText(s);
         }
+        tvStat.setText(stat);
 
     }
     private Location findLocationByName(String loc){
         Location locat=null;
-        //for (Location l: MapActivity.visitedLocations) {
-        for (int i=0; i<MapActivity.locations.size(); i++){
+        for (int i=0; i<MapActivity.visitedLocations.size(); i++){
             if (MapActivity.locations.get(i).name.equalsIgnoreCase(loc)){
                 return MapActivity.locations.get(i);
             }
