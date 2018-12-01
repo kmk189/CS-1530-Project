@@ -27,7 +27,7 @@ public class VisitedActivity extends AppCompatActivity  {
     }
 
     /* Close this activity, thereby bringing the map activity back */
-    public void launchMapActivity(ClickableSpan view) {
+    public void launchMapActivity(View view) {
         this.finish();
     }
 
@@ -76,6 +76,5 @@ public class VisitedActivity extends AppCompatActivity  {
         }
         return locat;
     }
-
 
 }
