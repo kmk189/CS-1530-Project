@@ -198,7 +198,7 @@ public class MapActivity extends FragmentActivity
             for (int i = 0; i < locations.length(); i++) {
                 JSONObject jsonLocation = locations.getJSONObject(i);
                 // parse the JSON object to a Location
-                Location newLocation = getLocation(locationType, jsonLocation.getString("name"),
+                Location newLocation = LocationFactory.getLocation(locationType, jsonLocation.getString("name"),
                         "", jsonLocation.getDouble("latitude"),
                         jsonLocation.getDouble("longitude"), jsonLocation.getInt("id"),
                         jsonLocation.getString("uuid"));
@@ -207,27 +207,6 @@ public class MapActivity extends FragmentActivity
                 locationMap.put(newLocation.uuid, newLocation);
             }
         }
-    }
-
-    /* Returns a location with the class named by the locationClass argument. The
-     * other arguments supply information for that location */
-    public Location getLocation(String locationClass, String name, String description, double lat,
-                                double lon, int id, String uuid) {
-        // in future: retrieve visited from device memory
-        boolean visited = false;
-        // use Location (superclass) constructor to instantiate a location object with limited information
-        if (locationClass.equals("Restaurant")) {
-            return new Restaurant(name, description, lat, lon, visited, id, uuid);
-        } else if (locationClass.equals("AcademicBuilding")) {
-            return new AcademicBuilding(name, description, lat, lon, visited, id, uuid);
-        } else if (locationClass.equals("Museum")) {
-            return new Museum(name, description, lat, lon, visited, id, uuid);
-        } else if (locationClass.equals("OutdoorAttraction")) {
-            return new OutdoorAttraction(name, description, lat, lon, visited, id, uuid);
-        } else if (locationClass.equals("SportsFacility")) {
-            return new SportsFacility(name, description, lat, lon, visited, id, uuid);
-        }
-        return null;
     }
 
     public void addMarker(Location location) {
