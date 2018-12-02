@@ -16,7 +16,6 @@ public class VisitedActivity extends AppCompatActivity  {
     TextView tvStat;
     Context con;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
