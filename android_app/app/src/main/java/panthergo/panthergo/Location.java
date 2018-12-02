@@ -59,4 +59,14 @@ public class Location implements Serializable {
     public Location copy() {
         return new Location(this);
     }
+
+    @Override
+    /* Two locations are considered equal if they have the same UUID (correspond to the same resource).
+     * Note: the behavior of this method currently prevents duplicate locations being added
+     * to the visited locations list in LocationVisitHandler.addLocationToVisitedList(). It makes it
+     * so that two Location objects don't have to have the same pointer to be considered equal.
+    */
+    public boolean equals(Object obj) {
+        return uuid.equals(((Location)obj).uuid);
+    }
 }
